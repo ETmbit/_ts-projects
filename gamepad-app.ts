@@ -1,45 +1,135 @@
-///////////////////////////
-//#######################//
-//##                   ##//
-//##  gampad-enums.ts  ##//
-//##                   ##//
-//#######################//
-///////////////////////////
+/*
+File:      github.com/ETmbit/gamepad-app.ts
+Copyright: ETmbit, 2026
+
+License:
+This file is part of the ETmbit extensions for MakeCode for micro:bit.
+It is free software and you may distribute it under the terms of the
+GNU General Public License (version 3 or later) as published by the
+Free Software Foundation. The full license text you find at
+https://www.gnu.org/licenses.
+
+Disclaimer:
+ETmbit extensions are distributed without any warranty.
+*/
+
+/////////////////////////
+//#####################//
+//##                 ##//
+//##  gampad-app.ts  ##//
+//##                 ##//
+//#####################//
+/////////////////////////
+
+////////////////
+//  INCLUDE   //
+//  radio.ts  //
+////////////////
+
+/*
+Use ETsend for sending messages between ETmbit modules.
+The messages are parsed in the ETmbit/general module.
+*/
+
+function ETsend(id: string, msg: string) {
+	// messages end with a '~'
+	// messages are sent in chunks
+	// mbit radio buffer size is only 19 bytes
+	//
+	// chunk format:
+	// -------------
+	// char 0..1 :   id
+	// char 2..18 :  msg chunk 
+
+	switch (id.length) {
+		case 0: id = "ET"; break
+		case 1: id += "#"; break
+		case 2: break
+		default: id = id.substr(0, 2)
+	}
+	let chunk: string
+	do {
+		chunk = msg.substr(0, 17)
+		msg = msg.substr(17)
+		if (chunk.length < 17)
+			chunk += '~'
+		radio.sendString(id + chunk)
+		basic.pause(1)
+	} while (msg.length > 0)
+}
+
+///////////////////
+//  END INCLUDE  //
+///////////////////
+
+///////////////////////
+//  INCLUDE          //
+//  gampad-enums.ts  //
+///////////////////////
 
 enum Joystick {
+    //% block="none"
+    //% block.loc.nl="geen"
     None,
+    //% block="up"
+    //% block.loc.nl="omhoog"
     Up,
+    //% block="right up"
+    //% block.loc.nl="rechts omhoog"
     UpRight,
+    //% block="right"
+    //% block.loc.nl="rechts"
     Right,
+    //% block="right down"
+    //% block.loc.nl="rechts omlaag"
     DownRight,
+    //% block="down"
+    //% block.loc.nl="omlaag"
     Down,
+    //% block="left down"
+    //% block.loc.nl="links omlaag"
     DownLeft,
+    //% block="left"
+    //% block.loc.nl="links"
     Left,
+    //% block="left up"
+    //% block.loc.nl="links omhoog"
     UpLeft,
 }
 
 enum Power {
+    //% block="without power"
+    //% block.loc.nl="zonder kracht"
     None,
+    //% block="Low power"
+    //% block.loc.nl="weinig kracht"
     Low,
+    //% block="Half power"
+    //% block.loc.nl="halve kracht"
     Half,
+    //% block="Full power"
+    //% block.loc.nl="volle kracht"
     Full,
 }
 
 enum Key {
-    Up,
-    Down,
-    Left,
-    Right,
+    //% block="up"
+    //% block.loc.nl="omhoog"
+    Up, //P12
+    //% block="down"
+    //% block.loc.nl="omlaag"
+    Down, //P15 
+    //% block="left"
+    //% block.loc.nl="links"
+    Left, //P13
+    //% block="right"
+    //% block.loc.nl="rechts"
+    Right, //P14
 }
 
-
-////////////////////////
-//####################//
-//##                ##//
-//##  gampadapp.ts  ##//
-//##                ##//
-//####################//
-////////////////////////
+/////////////////
+// END INCLUDE //
+/////////////////
 
 pins.digitalWritePin(DigitalPin.P0, 0)
 pins.setPull(DigitalPin.P12, PinPullMode.PullUp)    // up
@@ -106,7 +196,7 @@ namespace GamepadApp {
         if (angle != ANGLE || power != POWER) {
             ANGLE = angle
             POWER = power
-            radio.sendNumber(1000 + POWER * 1000 + ANGLE)
+            ETsend("GP", (1000 + POWER * 1000 + ANGLE).toString())
         }
     }
 
@@ -131,7 +221,7 @@ namespace GamepadApp {
         PRESSED[button] = newstate
         if (newstate)
             button += BUTTONMAX
-        radio.sendNumber(button)
+        ETsend("GP", button.toString())
     }
 
     basic.forever(function () {
